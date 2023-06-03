@@ -3,9 +3,11 @@ from sqlalchemy import text
 import os
 from datetime import date
 import telegram
+from telegram.error import BadRequest, Unauthorized
 
 token = os.environ['TOKEN']
 group_id = os.environ['GROUP_ID']
+
 
 def kick_expired_members(update, context):
     with engine.connect() as conn:
@@ -14,14 +16,25 @@ def kick_expired_members(update, context):
         rows_as_dicts = [dict(row._asdict()) for row in rows]
 
         bot = context.bot
+        successfully_banned_users = []
         for row in rows_as_dicts:
             user_id = row['user_id']
             try:
                 bot.ban_chat_member(chat_id=group_id, user_id=user_id)
-                bot.send_message(chat_id=user_id, text="Your subscription has expired. You have been removed from the group.")
-            except telegram.error.BadRequest as e:
+                successfully_banned_users.append(user_id)
+                try:
+                    bot.send_message(chat_id=user_id, text="Your subscription has expired. You have been removed from the group.")
+                except Unauthorized:
+                    # User hasn't granted permission to the bot, handle it accordingly
+                    pass
+            except BadRequest as e:
                 print(f"Failed to ban user {user_id}: {e}")
-        
+
         conn.execute(text("UPDATE users SET active = 0 WHERE active = 1 AND expiration_date < :today"), {'today': date.today()})
-        
+
         update.message.reply_text("Expired members kicked and updated in the database.")
+        
+        if successfully_banned_users:
+            print("Successfully banned users:")
+            for user_id in successfully_banned_users:
+                print(user_id)

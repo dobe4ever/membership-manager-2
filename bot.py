@@ -6,6 +6,7 @@ from datetime import date
 import telegram
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
+from telegram.error import BadRequest, Unauthorized
 
 token = os.environ['TOKEN']
 group_id = os.environ['GROUP_ID']
