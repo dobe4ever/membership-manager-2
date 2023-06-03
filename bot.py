@@ -5,7 +5,7 @@ import os
 from datetime import date
 import telegram
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ChatMemberHandler
 from telegram.error import BadRequest, Unauthorized
 
 token = os.environ['TOKEN']
@@ -77,19 +77,52 @@ def start(update, context):
 
     context.bot.send_message(chat_id=user_id, text=main_buttons_message, reply_markup=reply_markup)
 
-
 kick_handler = CommandHandler('kick0s', kick_expired_members)
+
+def new_member(update, context):
+    # Extract new member information
+    user = update.message.new_chat_members[0]
+    user_id = user.id
+    username = user.username
+    public_name = user.first_name
+
+    # Update user information in the database
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT * FROM users WHERE user_id = :user_id"), {'user_id': user_id})
+        user_data = result.fetchone()
+
+        if user_data:
+            # User exists, update username and public name if different
+            if user_data.username != username or user_data.public_name != public_name:
+                conn.execute(
+                    text("UPDATE users SET username = :username, public_name = :public_name WHERE user_id = :user_id"),
+                    {'username': username, 'public_name': public_name, 'user_id': user_id}
+                )
+        else:
+            # User doesn't exist, insert new row
+            conn.execute(
+                text("INSERT INTO users (user_id, username, public_name, active) VALUES (:user_id, :username, :public_name, 0)"),
+                {'user_id': user_id, 'username': username, 'public_name': public_name}
+            )
+
+    # Call kick_expired_members function
+    kick_expired_members(update, context)
 
 def main():
     updater = Updater(token=token, use_context=True)
     dispatcher = updater.dispatcher
 
-    # Add command handlers
+    # Add start handlers
     start_handler = CommandHandler('start', start)
     dispatcher.add_handler(start_handler)
-
+  
+    # Add kick handlers
     kick_handler = CommandHandler('kick0s', kick_expired_members)
     dispatcher.add_handler(kick_handler)
+
+    # Add new member handler
+    new_member_handler = MessageHandler(Filters.status_update.new_chat_members, new_member)
+    dispatcher.add_handler(new_member_handler)
 
     updater.start_polling()
 

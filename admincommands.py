@@ -23,7 +23,7 @@ def kick_expired_members(update, context):
                 bot.ban_chat_member(chat_id=group_id, user_id=user_id)
                 successfully_banned_users.append(user_id)
                 try:
-                    bot.send_message(chat_id=user_id, text="Your subscription has expired. You have been removed from the group.")
+                    bot.send_message(chat_id=user_id, text="Your subscription has expired. You have been removed from the dobe4ever group.")
                 except Unauthorized:
                     # User hasn't granted permission to the bot, handle it accordingly
                     pass
@@ -31,8 +31,6 @@ def kick_expired_members(update, context):
                 print(f"Failed to ban user {user_id}: {e}")
 
         conn.execute(text("UPDATE users SET active = 0 WHERE active = 1 AND expiration_date < :today"), {'today': date.today()})
-
-        update.message.reply_text("Expired members kicked and updated in the database.")
         
         if successfully_banned_users:
             print("Successfully banned users:")
