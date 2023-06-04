@@ -3,6 +3,7 @@ from admincommands import kick_expired_members
 from sqlalchemy import text
 import os
 from datetime import date
+import time
 import telegram
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ChatMemberHandler
@@ -16,6 +17,18 @@ def start(update, context):
     user_id = user.id
     username = user.username
     public_name = user.first_name  # Assuming the first name is the public name
+
+    # Send message with main buttons
+    main_buttons_message = "Feel free to explore the options below."
+
+    keyboard = [
+        [KeyboardButton("Account")],
+        [KeyboardButton("Purchase Membership")],
+        [KeyboardButton("About & Support")]
+    ]
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+    context.bot.send_message(chat_id=user_id, text=main_buttons_message, reply_markup=reply_markup)
 
     # Update user information in the database
     with engine.connect() as conn:
@@ -65,17 +78,6 @@ def start(update, context):
                 # Send message without buttons
                 context.bot.send_message(chat_id=user_id, text=message)
 
-    # Send message with main buttons
-    main_buttons_message = "Feel free to explore the options below."
-
-    keyboard = [
-        [KeyboardButton("Account")],
-        [KeyboardButton("Purchase Membership")],
-        [KeyboardButton("About & Support")]
-    ]
-    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-
-    context.bot.send_message(chat_id=user_id, text=main_buttons_message, reply_markup=reply_markup)
 
 kick_handler = CommandHandler('kick0s', kick_expired_members)
 
