@@ -1,7 +1,6 @@
 python-telegram-bot==13.9
 yfinance==0.1.64
 SQLAlchemy==1.4.25
-aiogram==2.16.1
 telegram==0.0.1
 requests==2.26.0
 urllib3==1.26.7
