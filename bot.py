@@ -211,7 +211,6 @@ def main():
     dp.add_handler(CallbackQueryHandler(handle_cancel_transaction, pattern='^cancel$'))
     
     updater.start_polling()
-    updater.idle()
 
     # Schedule the job to run once a day at a specific time (e.g., 1:00 AM)
     schedule.every().day.at("01:00").do(job, updater.bot, group_id)
