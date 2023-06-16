@@ -4,3 +4,4 @@ SQLAlchemy==1.4.25
 telegram==0.0.1
 requests==2.26.0
 urllib3==1.26.7
+pymysql
