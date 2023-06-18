@@ -9,6 +9,9 @@ engine = create_engine(db, connect_args={
   }
 })
 
+bot_token = os.environ['TOKEN']
+group_id = os.environ['GROUP_ID']
+
 # Add new user to the db or update personal info if it changed
 def add_or_update_user(update):
     user = update.effective_user
@@ -132,26 +135,42 @@ import datetime
 
 
 def kick_expired_members(bot, group_id):
-    print("Executing kick_expired_members function")
+    current_time = datetime.datetime.now()
+    print(f"kick_expired_members executed at {current_time}")
+
     with engine.connect() as conn:
-        # Update 'active' field for expired members
-        conn.execute(text("UPDATE users SET active = 0 WHERE active = 1 AND expiration_date < :today"), {'today': date.today()})
+        conn.execute(
+            text("UPDATE users SET active = 0 WHERE active = 1 AND (expiration_date < :today OR expiration_date IS NULL)"),
+            {'today': date.today()}
+        )
 
-        # Fetch the IDs of expired members
         result = conn.execute(text("SELECT user_id FROM users WHERE active = 0"))
-        expired_member_ids = [row[0] for row in result]  # Access the first column of each row
+        expired_member_ids = [row[0] for row in result]
 
-        print("Expired Member IDs:", expired_member_ids)
+        # Commenting out the print statement for expired member IDs
+        # print("Expired Member IDs:", expired_member_ids)
 
-        # Ban the expired members from the group
+        already_banned_ids = []
+        not_found_ids = []
+        successfully_banned_ids = []
+
         for user_id in expired_member_ids:
             try:
-                bot.ban_chat_member(chat_id=group_id, user_id=user_id)
-                print(f"Successfully banned user: {user_id}")
+                member = bot.get_chat_member(chat_id=group_id, user_id=user_id)
+                if member.status != 'kicked':
+                    bot.ban_chat_member(chat_id=group_id, user_id=user_id)
+                    successfully_banned_ids.append(user_id)
+                else:
+                    already_banned_ids.append(user_id)
             except BadRequest as e:
-                print(f"Failed to ban user {user_id}: {e}")
+                not_found_ids.append(user_id)
 
-def job(bot, group_id):
-    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"Job executed at: {current_time}")
-    kick_expired_members(bot, group_id)
+        # Commenting out the print statements for already banned IDs and not found IDs
+        # if already_banned_ids:
+        #     print("Already banned:", already_banned_ids)
+        # if not_found_ids:
+        #     print("Not found:", not_found_ids)
+
+        if successfully_banned_ids:
+            print("Successfully banned:", successfully_banned_ids)
+

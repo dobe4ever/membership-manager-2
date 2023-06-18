@@ -3,5 +3,4 @@ yfinance==0.1.64
 SQLAlchemy==1.4.25
 requests==2.26.0
 pymysql
-schedule
 streamlit
