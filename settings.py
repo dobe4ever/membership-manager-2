@@ -13,9 +13,9 @@ START_BUTTONS = [
 ]
 
 PACKAGE_BUTTONS = [
-    [InlineKeyboardButton("3 months - $67.5", callback_data='package3')],
-    [InlineKeyboardButton("6 months - $120", callback_data='package6')],
-    [InlineKeyboardButton("1 year - $210", callback_data='package12')],
+    [InlineKeyboardButton("3 Months ($67.5)", callback_data='package3')],
+    [InlineKeyboardButton("6 Months ($120)", callback_data='package6')],
+    [InlineKeyboardButton("1 Year ($210)", callback_data='package12')],
     [InlineKeyboardButton("⬅️ Back", callback_data='back')]
 ]
 
