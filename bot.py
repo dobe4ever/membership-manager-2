@@ -130,11 +130,15 @@ def handle_coin_selection(update: Update, context: CallbackContext):
     cancel_button = InlineKeyboardButton("Cancel Transaction", callback_data='cancel')
     keyboard = [[cancel_button]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    query.message.edit_text(
-        f"Please send `{amount}` {coin} to the address below within 1 hour:\n\n`{address}`\n\n"
-        "Once the payment hits the blockchain, you will receive a confirmation message automatically.",
-        reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
 
+    # Send the payment amount first
+    query.message.reply_text(f"Please send `{amount}` {coin} within 1 hour to the address below:", parse_mode=ParseMode.MARKDOWN)
+    
+    # Send the address as a separate message
+    query.message.reply_text(f"`{address}`", parse_mode=ParseMode.MARKDOWN)
+    
+    # Send explanation message
+    query.message.reply_text("Once the payment hits the blockchain, you will receive a confirmation message automatically.", reply_markup=reply_markup)
 
 # Cancel transaction button
 def handle_cancel_transaction(update: Update, context: CallbackContext):
