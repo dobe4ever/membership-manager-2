@@ -1,4 +1,7 @@
 from sqlalchemy import create_engine, text
+from telegram.error import BadRequest
+from datetime import date
+import datetime
 import os
 
 db = os.environ['DB_CONNECTION_STRING']
@@ -128,10 +131,6 @@ def new_member(update, context):
 
     # Pass the update object to add_or_update_user()
     add_or_update_user(update)
-
-from telegram.error import BadRequest
-from datetime import date
-import datetime
 
 
 def kick_expired_members(bot, group_id):

@@ -1,22 +1,17 @@
+# LAST KNOWN WORKING BOT
+
 from settings import START_BUTTONS, PACKAGE_BUTTONS, COIN_BUTTONS, PACKAGE_PRICES
 from utils import calculate_amount
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, Update
 from telegram.ext import MessageHandler, Filters, CallbackContext, CommandHandler, Updater, CallbackQueryHandler
 from database import kick_expired_members, new_member, transaction_in_progress, get_user_membership, add_or_update_user, get_address, release_address
-from keep_alive import keep_alive
-import logging
 import os
-import requests
-from datetime import datetime
-import threading
-import time
-from telegram import Bot
+
 
 bot_token = os.environ['TOKEN']
 group_id = os.environ['GROUP_ID']
 
 
-# Start command
 def start(update: Update, context: CallbackContext):
     user = update.effective_user
     first_name = user.first_name
@@ -34,7 +29,6 @@ def start(update: Update, context: CallbackContext):
     update.message.reply_text(welcome_message, reply_markup=reply_markup)
 
 
-# Back button (simulates back navigation)
 def handle_back(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
@@ -46,7 +40,6 @@ def handle_back(update: Update, context: CallbackContext):
     query.message.edit_text('Welcome to the members manager bot!', reply_markup=reply_markup)
 
 
-# Purchase Membership Button
 def handle_purchase(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
@@ -71,7 +64,6 @@ def handle_purchase(update: Update, context: CallbackContext):
     query.message.edit_text('Please select a package:', reply_markup=reply_markup)
 
 
-# What to do when user selects a membership package (3, 6, 12 Months)
 def handle_package_selection(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()    
@@ -82,7 +74,6 @@ def handle_package_selection(update: Update, context: CallbackContext):
     context.user_data['selected_package'] = query.data
 
 
-# What to do when user selects a payment method (BTC, BCH, ETH)
 def handle_coin_selection(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
@@ -136,7 +127,6 @@ def handle_coin_selection(update: Update, context: CallbackContext):
         reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
 
 
-# Cancel transaction button
 def handle_cancel_transaction(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
@@ -160,7 +150,6 @@ def handle_cancel_transaction(update: Update, context: CallbackContext):
         query.message.reply_text('There is no active transaction to cancel.', reply_markup=reply_markup)
 
 
-# My Account button
 def handle_account(update, context):
     user = update.effective_user
     user_id = user.id
@@ -186,7 +175,6 @@ def handle_account(update, context):
         context.bot.send_message(chat_id=user_id, text=message, reply_markup=reply_markup)
 
 
-# About & Support button
 def handle_about(update, context):
     # Create an inline keyboard with the 'Back' button
     reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("< Back", callback_data='back')]])
@@ -208,29 +196,15 @@ def handle_about(update, context):
     )
 
 
-### No user interaction shceduled functions ###
+###TESTING###
 
-# Call the kick_expired_members from the database.py module & shcedule the task to execute every 2 hours
-def execute_kick_expired_members(bot_token, group_id):
-    while True:
-        # Create an instance of the bot using the provided token variable above
-        bot = Bot(token=bot_token)
-        # Execute the kick_expired_members function
-        kick_expired_members(bot, group_id)
-        time.sleep(7200)  # Delay execution for 2 hours
-
-
-# Send requests to Telegram ever 10min to keep connection active
-def keep_alive_tele():
-    while True:
-        response = requests.get(f'https://api.telegram.org/bot{bot_token}/getMe')
-        print("Keep-alive executed at", datetime.now(), "status code:", response.status_code)
-        #print("Response status code:", response.status_code)
-        #print("Response content:", response.content)
-        time.sleep(600)  # Delay execution for 10 minute
-
-
-### logs & errors ###
+import logging
+import os
+import requests
+from datetime import datetime
+import threading
+import time
+from telegram import Bot
 
 # Configure logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -241,6 +215,24 @@ logger = logging.getLogger(__name__)
 def error_handler(update, context):
     """Log the error and handle it gracefully."""
     logger.error(msg="Exception occurred", exc_info=context.error)
+
+def keep_alive():
+    while True:
+        response = requests.get(f'https://api.telegram.org/bot{bot_token}/getMe')
+        print("Keep-alive executed at", datetime.now(), "status code:", response.status_code)
+        #print("Response status code:", response.status_code)
+        #print("Response content:", response.content)
+        time.sleep(600)  # Delay execution for 10 minute
+
+
+def execute_kick_expired_members(bot_token, group_id):
+    while True:
+        # Create an instance of the bot using the provided token
+        bot = Bot(token=bot_token)
+        # Execute the kick_expired_members function
+        kick_expired_members(bot, group_id)
+        time.sleep(7200)  # Delay execution for 2 hours
+
 
 def main():
     # Pass the session to the updater
@@ -266,18 +258,18 @@ def main():
     # Start & keep the bot running
     updater.start_polling()
 
+
     # Create a separate thread for executing kick_alive
-    kick_alive_thread = threading.Thread(target=keep_alive_tele)
+    kick_alive_thread = threading.Thread(target=keep_alive)
     kick_alive_thread.daemon = True
     kick_alive_thread.start()
+  
 
     # Create a separate thread for executing kick_expired_members
     kick_expired_members_thread = threading.Thread(target=execute_kick_expired_members, args=(bot_token, group_id))
     kick_expired_members_thread.daemon = True
     kick_expired_members_thread.start()
 
-    # call from Kepp_alive.py (keep bot alive using uptimerobot even if I close this editor)
-    keep_alive()
 
     updater.idle()
     updater.stop()
