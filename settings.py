@@ -7,19 +7,18 @@ PACKAGE_PRICES = {
 }
 
 START_BUTTONS = [
-    [InlineKeyboardButton("My account", callback_data='account')],
-    [InlineKeyboardButton("Purchase Membership", callback_data='purchase')],
-    [InlineKeyboardButton("About & Support", callback_data='about')]
+    [InlineKeyboardButton("👤 My Account", callback_data='account')],
+    [InlineKeyboardButton("💰 Purchase Membership", callback_data='purchase')],
+    [InlineKeyboardButton("ℹ️ About & Support", callback_data='about')]
 ]
 
 PACKAGE_BUTTONS = [
-    [
-        InlineKeyboardButton("3 months - $67.5", callback_data='package3'),
-        InlineKeyboardButton("6 months - $120", callback_data='package6'),
-        InlineKeyboardButton("1 year - $210", callback_data='package12')
-    ],
-    [InlineKeyboardButton("< Back", callback_data='back')]
+    [InlineKeyboardButton("3 months - $67.5", callback_data='package3')],
+    [InlineKeyboardButton("6 months - $120", callback_data='package6')],
+    [InlineKeyboardButton("1 year - $210", callback_data='package12')],
+    [InlineKeyboardButton("⬅️ Back", callback_data='back')]
 ]
+
 
 COIN_BUTTONS = [
     [
@@ -27,6 +26,6 @@ COIN_BUTTONS = [
         InlineKeyboardButton("BCH", callback_data='BCH'),
         InlineKeyboardButton("ETH", callback_data='ETH')
     ],
-    [InlineKeyboardButton("< Back", callback_data='back')]
+    [InlineKeyboardButton("⬅️ Back", callback_data='back')]
 ]
 

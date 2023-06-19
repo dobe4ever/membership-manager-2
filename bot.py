@@ -28,7 +28,7 @@ def start(update: Update, context: CallbackContext):
     reply_markup = InlineKeyboardMarkup(START_BUTTONS)
 
     # Personalize the welcome message with the user's first name
-    welcome_message = f"Welcome to the members manager bot, {first_name}!"
+    welcome_message = f"Hi {first_name}, welcome to the members manager bot! Here you can manage your account, purchase membership, and get support."
 
     # Send the personalized welcome message with inline keyboard
     update.message.reply_text(welcome_message, reply_markup=reply_markup)
@@ -43,7 +43,7 @@ def handle_back(update: Update, context: CallbackContext):
     reply_markup = InlineKeyboardMarkup(START_BUTTONS)
 
     # Send welcome message with inline keyboard
-    query.message.edit_text('Welcome to the members manager bot!', reply_markup=reply_markup)
+    query.message.edit_text('Welcome back! Feel free to manage your account, purchase membership, or get support.', reply_markup=reply_markup)
 
 
 # Purchase Membership Button
