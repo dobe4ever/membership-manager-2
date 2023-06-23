@@ -3,7 +3,6 @@ from utils import calculate_amount
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, Update
 from telegram.ext import MessageHandler, Filters, CallbackContext, CommandHandler, Updater, CallbackQueryHandler
 from database import kick_expired_members, new_member, transaction_in_progress, get_user_membership, add_or_update_user, get_address, release_address
-from keep_alive import keep_alive
 import logging
 import os
 import requests
@@ -11,10 +10,13 @@ from datetime import datetime
 import threading
 import time
 from telegram import Bot
+from keep_alive import keep_alive_ping
+
+keep_alive_ping()
 
 bot_token = os.environ['TOKEN']
 group_id = os.environ['GROUP_ID']
-
+bot = Bot(token=bot_token)
 
 # Start command
 def start(update: Update, context: CallbackContext):
@@ -23,7 +25,6 @@ def start(update: Update, context: CallbackContext):
 
     # Call add_or_update_user() to add or update the user in the database
     add_or_update_user(update)
-
     # Create inline keyboard markup using the constant START_BUTTONS
     reply_markup = InlineKeyboardMarkup(START_BUTTONS)
 
@@ -140,6 +141,7 @@ def handle_coin_selection(update: Update, context: CallbackContext):
     # Send explanation message
     query.message.reply_text("Once the payment hits the blockchain, you will receive a confirmation message automatically.", reply_markup=reply_markup)
 
+
 # Cancel transaction button
 def handle_cancel_transaction(update: Update, context: CallbackContext):
     query = update.callback_query
@@ -214,28 +216,6 @@ def handle_about(update, context):
 
 ### No user interaction shceduled functions ###
 
-# Call the kick_expired_members from the database.py module & shcedule the task to execute every 2 hours
-def execute_kick_expired_members(bot_token, group_id):
-    while True:
-        # Create an instance of the bot using the provided token variable above
-        bot = Bot(token=bot_token)
-        # Execute the kick_expired_members function
-        kick_expired_members(bot, group_id)
-        time.sleep(7200)  # Delay execution for 2 hours
-
-
-# Send requests to Telegram ever 10min to keep connection active
-def keep_alive_tele():
-    while True:
-        response = requests.get(f'https://api.telegram.org/bot{bot_token}/getMe')
-        print("Keep-alive executed at", datetime.now(), "status code:", response.status_code)
-        #print("Response status code:", response.status_code)
-        #print("Response content:", response.content)
-        time.sleep(600)  # Delay execution for 10 minute
-
-
-### logs & errors ###
-
 # Configure logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -245,6 +225,24 @@ logger = logging.getLogger(__name__)
 def error_handler(update, context):
     """Log the error and handle it gracefully."""
     logger.error(msg="Exception occurred", exc_info=context.error)
+
+def keep_alive():
+    while True:
+        response = requests.get(f'https://api.telegram.org/bot{bot_token}/getMe')
+        print("Keep-alive executed at", datetime.now(), "status code:", response.status_code)
+        #print("Response status code:", response.status_code)
+        #print("Response content:", response.content)
+        time.sleep(600)  # Delay execution for 10 minute
+
+
+def execute_kick_expired_members(bot_token, group_id):
+    while True:
+        # Create an instance of the bot using the provided token
+        bot = Bot(token=bot_token)
+        # Execute the kick_expired_members function
+        kick_expired_members(bot, group_id)
+        time.sleep(7200)  # Delay execution for 2 hours
+
 
 def main():
     # Pass the session to the updater
@@ -269,22 +267,36 @@ def main():
 
     # Start & keep the bot running
     updater.start_polling()
-
-    # Create a separate thread for executing kick_alive
-    kick_alive_thread = threading.Thread(target=keep_alive_tele)
-    kick_alive_thread.daemon = True
-    kick_alive_thread.start()
-
+  
+    # Create a separate thread for executing keep_alive
+    keep_alive_thread = threading.Thread(target=keep_alive)
+    keep_alive_thread.daemon = True
+    keep_alive_thread.start()
+  
     # Create a separate thread for executing kick_expired_members
     kick_expired_members_thread = threading.Thread(target=execute_kick_expired_members, args=(bot_token, group_id))
     kick_expired_members_thread.daemon = True
     kick_expired_members_thread.start()
 
-    # call from Kepp_alive.py (keep bot alive using uptimerobot even if I close this editor)
-    keep_alive()
 
     updater.idle()
     updater.stop()
 
 if __name__ == '__main__':
     main()
+
+
+url = "https://api.blockchair.com/bitcoin/dashboards/address/bc1q35qf9cus5ly2xrmfmx6nfazvyqzh9qtpcvpyz8"
+params = {
+    "transaction_details": "true",
+    "omni": "true"
+}
+
+response = requests.get(url, params=params)
+
+if response.status_code == 200:
+    data = response.json()
+    # Process the response data as needed
+    print(data)
+else:
+    print("Request failed with status code:", response.status_code)

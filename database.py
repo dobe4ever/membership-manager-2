@@ -1,10 +1,15 @@
 from sqlalchemy import create_engine, text
+from telegram import Bot
 from telegram.error import BadRequest
 from datetime import date
 import datetime
 import os
 
+bot_token = os.environ['TOKEN']
+group_id = os.environ['GROUP_ID']
 db = os.environ['DB_CONNECTION_STRING']
+bot = Bot(token=bot_token)
+
 
 engine = create_engine(db, connect_args={
   "ssl": {
@@ -12,8 +17,6 @@ engine = create_engine(db, connect_args={
   }
 })
 
-bot_token = os.environ['TOKEN']
-group_id = os.environ['GROUP_ID']
 
 # Add new user to the db or update personal info if it changed
 def add_or_update_user(update):
@@ -39,10 +42,10 @@ def add_or_update_user(update):
                 {'user_id': user_id, 'username': username, 'public_name': public_name}
             )
 
-        # Print the first row from the users table
-        result = conn.execute(text("SELECT * FROM users LIMIT 1"))
+        # Print the row of the user who interacted with the bot
+        result = conn.execute(text("SELECT * FROM users WHERE user_id = :user_id"), {'user_id': user_id})
         print(result.fetchone())
-
+        kick_expired_members(bot, group_id)
 
 # Lock and return address   
 def get_address(coin, user_id, amount):
@@ -131,7 +134,7 @@ def new_member(update, context):
 
     # Pass the update object to add_or_update_user()
     add_or_update_user(update)
-
+  
 
 def kick_expired_members(bot, group_id):
     current_time = datetime.datetime.now()
@@ -171,5 +174,7 @@ def kick_expired_members(bot, group_id):
         #     print("Not found:", not_found_ids)
 
         if successfully_banned_ids:
-            print("Successfully banned:", successfully_banned_ids)
-
+            print("Successfully banned:")
+            result = conn.execute(text("SELECT * FROM users WHERE user_id IN :user_ids"), {'user_ids': successfully_banned_ids})
+            for row in result:
+                print(row)

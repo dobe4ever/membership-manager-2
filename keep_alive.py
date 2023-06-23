@@ -1,12 +1,15 @@
-from flask import Flask,render_template
+from flask import Flask
 from threading import Thread
 
 app = Flask(__name__)
+
 @app.route('/')
-def index():
-    return "Alive"
+def home():
+    return "I'm alive"
+
 def run():
-  app.run(host='0.0.0.0',port=8080)
-def keep_alive():  
+  app.run(host='0.0.0.0', port=8080)
+
+def keep_alive_ping():
     t = Thread(target=run)
     t.start()

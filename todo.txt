@@ -1,0 +1,5 @@
+TODO:
+Implements blockcypher API
+Review & fix comments
+Optimize database to wasily access columns by variable names globaly
+Move text messages to settings & call them by variable namesfrom bot.py
